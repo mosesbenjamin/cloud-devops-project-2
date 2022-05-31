@@ -27,11 +27,13 @@ Parameters:
       Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
       Type: String
       Default: 10.0.3.0/24  
+
 Resources:
 
   ##################################################
   #----------------- NETWORKING -------------------#
   ##################################################
+
   VPC: 
       Type: AWS::EC2::VPC
       Properties:
@@ -190,7 +192,7 @@ Resources:
       Properties:
           RouteTableId: !Ref PrivateRouteTable2
           SubnetId: !Ref PrivateSubnet2
-  
+
   ##################################################
   #----------------- SERVERS ----------------------#
   ##################################################
@@ -210,6 +212,7 @@ Resources:
         FromPort: 80
         ToPort: 80
         CidrIp: 0.0.0.0/0
+
   WebServerSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -238,37 +241,42 @@ Resources:
           #!/bin/bash
           yum update -y
           yum install -y httpd
-          systemctl start httpd      
+          systemctl start httpd       
           cd /var/www/html
           echo “it works! Udagram, Udacity, By Sunday Moses Benjamin!!!”> index.html
       ImageId: ami-0022f774911c1d690
       SecurityGroups:
       - Ref: WebServerSecGroup
-      InstanceType: t3.medium # 2vCPUs, >= 4Gb RAM
+      InstanceType: t3.medium
       BlockDeviceMappings:
       - DeviceName: "/dev/sdk"
         Ebs:
-          VolumeSize: '10' # >=10Gb disk space
+          VolumeSize: '10'
 
   WebAppGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: 
+      - PrivateSubnet1
+      - PrivateSubnet2
     Properties:
       VPCZoneIdentifier:
-      - Ref: PrivateSubnet1
-      - Ref: PrivateSubnet2
+      - !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
       LaunchConfigurationName:
         Ref: WebAppLaunchConfig
-      MinSize: '4' # 4 servers, two located in each private subnets
+      MinSize: '4'
       MaxSize: '5'
       TargetGroupARNs:
       - Ref: WebAppTargetGroup
 
   WebAppLB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn: 
+      - PublicSubnet1
+      - PublicSubnet2
     Properties:
       Subnets:
-      - Ref: PublicSubnet1
-      - Ref: PublicSubnet2
+      - !Ref PublicSubnet1
+      - !Ref PublicSubnet2
       SecurityGroups:
       - Ref: LBSecGroup
 
