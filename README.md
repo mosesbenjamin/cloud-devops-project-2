@@ -1,2 +1,0 @@
-#### Run the command below:
- - aws cloudformation create-stack  --stack-name project2 --region us-east-1 --template-body file://main.yml --parameters file://main-params.json --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" 
